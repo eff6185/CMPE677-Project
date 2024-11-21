@@ -3,6 +3,7 @@ import pandas as pd  # Data manipulation
 import numpy as np  # Numerical operations and random generation
 import matplotlib.pyplot as plt  # For plotting, though not used in this code
 from sklearn.svm import OneClassSVM  # One-Class Support Vector Machine (SVM) for anomaly detection
+from tqdm.auto import tqdm  # Progress bar for loops
 
 # Random seed for reproducibility
 np.random.seed(0)
@@ -20,13 +21,13 @@ NUs = [0.05, 1./16., 0.1, 0.2, 0.5, 0.7, 0.9, 0.99]
 GAMMAs = [0.05, 1./16., 0.1, 0.2, 0.5, 0.7, 0.9, 0.99]
 
 # Iterate through different configurations
-for percentage in percentages:
-    for ratio, ratio_text in zip(ratios, ratios_text):  # Iterate over train-test split ratios
+for percentage in tqdm(percentages, desc="Processing percentages"):
+    for ratio, ratio_text in tqdm(zip(ratios, ratios_text), desc="Processing ratios", leave=True):  # Iterate over train-test split ratios
         output = []  # Placeholder for storing results before writing to CSV
         # print(f'No. of features: {n_features}, No. of generated samples: {n_samples}, Split ratio: {ratio_text}, Gaussian percentage: {percentage}')
         
         # Read data from CSV based on current configuration (generated beforehand)
-        df = pd.read_csv("Golden/stats_blackscholes_16/Data-traffic-distribution.csv")
+        df = pd.read_csv("New/Data-traffic-distribution-giga.csv")
         
         # Column indicating the class labels
         class_column = 'Applications (Label Classes)'
@@ -42,8 +43,8 @@ for percentage in percentages:
         tmp_out.append(['Features: 16', '', '', '', '', '', ''])  # Formatting for CSV output
 
         # Iterate through each class (target class)
-        for index in label_indices:
-            print('Target class:', labels[index])
+        for index in tqdm(label_indices, desc="Processing classes", leave=True):
+            tqdm.write(f'Target class: {labels[index]}')
             
             # Select data points for the current class (target class) excluding the class label column
             X_train = df[df[class_column] == index].to_numpy()[:, :16]
@@ -65,8 +66,8 @@ for percentage in percentages:
             tmp_out.append([f'Target Class: {labels[index]}', 'TP', 'FP', 'FN', 'TN', 'ACC (%)', ''])  # TP, FP, etc. are placeholders for output
 
             # Iterate over `nu` and `gamma` hyperparameters of OneClassSVM
-            for nu in NUs:
-                for gamma in GAMMAs:
+            for nu in tqdm(NUs, desc="Processing NU values", leave=True):
+                for gamma in tqdm(GAMMAs, desc=f"Processing Gamma values", leave=True):
                     # Initialize OneClassSVM with current parameters
                     clf = OneClassSVM(kernel='rbf', nu=nu, gamma=gamma)
                     clf.fit(X_train_target)  # Train the model on the target class
@@ -92,4 +93,5 @@ for percentage in percentages:
         # Combine all output rows for this configuration and save to CSV
         output = np.concatenate(output, axis=1)  # Merge results for different features
         out = pd.DataFrame(output)  # Convert to DataFrame for easier CSV export
-        out.to_csv("Golden/stats_blackscholes_16/Data-traffic-distribution-results.csv", header=False, index=False)  # Save the result
+        out.to_csv("New/Data-traffic-distribution-results.csv", header=False, index=False)  # Save the result
+        # Python 3.12, 
