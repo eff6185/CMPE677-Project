@@ -12,9 +12,9 @@ np.random.seed(0)
 # n_training_samples = 16  # Number of training samples (unused in this code)
 # nums_features = [1, 4, 8, 16]  # List of feature counts to iterate over
 # nums_samples = [1, 2, 3, 4, 5]  # List of sample sizes to iterate over
-percentages = [10, 20, 30, 40, 50]  # Different percentages of Gaussian noise
-ratios = [0.8, 0.9]  # Data split ratios for train/test (80-20% or 90-10%)
-ratios_text = ['8-2', '9-1']  # Text labels for the split ratios
+percentages = [50] #percentages = [10, 20, 30, 40, 50]  Different percentages of Gaussian noise
+ratios = [0.9] #ratios = [0.8, 0.9]  Data split ratios for train/test (80-20% or 90-10%)
+ratios_text = ['9-1'] #ratios_text = ['8-2', '9-1'] Text labels for the split ratios
 # List of different `nu` (a hyperparameter of OneClassSVM, controlling support vectors)
 NUs = [0.05, 1./16., 0.1, 0.2, 0.5, 0.7, 0.9, 0.99]
 # List of different `gamma` values (another hyperparameter controlling kernel width in SVM)
@@ -23,6 +23,7 @@ GAMMAs = [0.05, 1./16., 0.1, 0.2, 0.5, 0.7, 0.9, 0.99]
 OptimizedNU = [0.99, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.99]
 OptimizedGamma = [0.99, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.99]
 OptimizedModels = []
+MultiTrainData = []
 
 
 
@@ -49,9 +50,15 @@ for percentage in tqdm(percentages, desc="Processing percentages"):
         tmp_out.append(['Features: 16', '', '', '', '', '', ''])  # Formatting for CSV output
 
         # Iterate through each class (target class)
+        i = 0
         for index in tqdm(label_indices, desc="Processing classes", leave=True):
             tqdm.write(f'Target class: {labels[index]}')
-            
+
+            #Grab Optimized Parameters
+            nu = OptimizedNU[i]
+            gamma = OptimizedGamma[i]
+            i += 1
+
             # Select data points for the current class (target class) excluding the class label column
             X_train = df[df[class_column] == index].to_numpy()[:, :16]
             np.random.shuffle(X_train)  # Shuffle the rows to randomize
@@ -64,6 +71,10 @@ for percentage in tqdm(percentages, desc="Processing percentages"):
             
             # Test data from the target class (benign cases)
             X_test_target = X_train[split_index:, :]
+
+            #Add Test Data to list of data to be used for multi
+
+            MultiTrainData.append(X_test_target)
             
             # Test data from other classes (anomalous cases)
             X_test_others = df[df[class_column] != index].to_numpy()[:, :16]
@@ -72,32 +83,13 @@ for percentage in tqdm(percentages, desc="Processing percentages"):
             tmp_out.append([f'Target Class: {labels[index]}', 'TP', 'FP', 'FN', 'TN', 'ACC (%)', ''])  # TP, FP, etc. are placeholders for output
 
             # Iterate over `nu` and `gamma` hyperparameters of OneClassSVM
-            for nu in tqdm(NUs, desc="Processing NU values", leave=True):
-                for gamma in tqdm(GAMMAs, desc=f"Processing Gamma values", leave=True):
-                    # Initialize OneClassSVM with current parameters
-                    clf = OneClassSVM(kernel='rbf', nu=nu, gamma=gamma)
-                    clf.fit(X_train_target)  # Train the model on the target class
+        
+            # Initialize OneClassSVM with current parameters
+            clf = OneClassSVM(kernel='rbf', nu=nu, gamma=gamma)
+            clf.fit(X_train_target)  # Train the model on the target class
 
-                    # Predict on test data from the same class (expected to be positive)
-                    y_pred_train = clf.predict(X_test_target)
-                    FP = y_pred_train[y_pred_train == -1].size  # False positives (misclassified as anomalies)
-                    TN = y_pred_train[y_pred_train == 1].size  # True negatives (correctly classified as non-anomalous)
+            #Append the trained model to the list of optimized models
+            OptimizedModels.append[clf]
 
-                    # Predict on data from other classes (expected to be anomalies)
-                    y_pred_test = clf.predict(X_test_others)
-                    TP = y_pred_test[y_pred_test == -1].size  # True positives (correctly classified as anomalies)
-                    FN = y_pred_test[y_pred_test == 1].size  # False negatives (misclassified as benign)
 
-                    # Calculate accuracy and store results in the temporary output
-                    accuracy = (TP + TN) / (TP + FP + FN + TN) * 100
-                    tmp_out.append([f'Nu: {nu}, Gamma: {gamma}', TP, FP, FN, TN, accuracy, ''])  # Append to CSV output
-
-            tmp_out.append(['', '', '', '', '', '', ''])  # Add spacing in output between target classes
-
-        output.append(tmp_out)
-
-        # Combine all output rows for this configuration and save to CSV
-        output = np.concatenate(output, axis=1)  # Merge results for different features
-        out = pd.DataFrame(output)  # Convert to DataFrame for easier CSV export
-        out.to_csv("New/Data-traffic-distribution-results.csv", header=False, index=False)  # Save the result
-        # Python 3.12, 
+    #MultiClassificaiton attempt
