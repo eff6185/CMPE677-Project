@@ -20,6 +20,12 @@ NUs = [0.05, 1./16., 0.1, 0.2, 0.5, 0.7, 0.9, 0.99]
 # List of different `gamma` values (another hyperparameter controlling kernel width in SVM)
 GAMMAs = [0.05, 1./16., 0.1, 0.2, 0.5, 0.7, 0.9, 0.99]
 
+OptimizedNU = [0.99, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.99]
+OptimizedGamma = [0.99, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.99]
+OptimizedModels = []
+
+
+
 # Iterate through different configurations
 for percentage in tqdm(percentages, desc="Processing percentages"):
     for ratio, ratio_text in tqdm(zip(ratios, ratios_text), desc="Processing ratios", leave=True):  # Iterate over train-test split ratios
