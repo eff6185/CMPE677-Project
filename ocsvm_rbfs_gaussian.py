@@ -4,6 +4,7 @@ import numpy as np  # Numerical operations and random generation
 import matplotlib.pyplot as plt  # For plotting, though not used in this code
 from sklearn.svm import OneClassSVM  # One-Class Support Vector Machine (SVM) for anomaly detection
 from tqdm.auto import tqdm  # Progress bar for loops
+import time
 
 # Random seed for reproducibility
 np.random.seed(0)
@@ -24,6 +25,10 @@ OptimizedNU = [0.99, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99,
 OptimizedGamma = [0.99, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.05, 0.99, 0.99, 0.99]
 OptimizedModels = []
 MultiTrainData = []
+SelfClassificaitons = []
+SharedIndices = {}
+
+
 
 
 
@@ -74,22 +79,53 @@ for percentage in tqdm(percentages, desc="Processing percentages"):
 
             #Add Test Data to list of data to be used for multi
 
-            MultiTrainData.append(X_test_target)
+            MultiTrainData.extend(X_test_target)
             
             # Test data from other classes (anomalous cases)
             X_test_others = df[df[class_column] != index].to_numpy()[:, :16]
 
             # Add target class header to the temporary output
             tmp_out.append([f'Target Class: {labels[index]}', 'TP', 'FP', 'FN', 'TN', 'ACC (%)', ''])  # TP, FP, etc. are placeholders for output
-
-            # Iterate over `nu` and `gamma` hyperparameters of OneClassSVM
-        
+ 
             # Initialize OneClassSVM with current parameters
             clf = OneClassSVM(kernel='rbf', nu=nu, gamma=gamma)
             clf.fit(X_train_target)  # Train the model on the target class
-
+            
             #Append the trained model to the list of optimized models
-            OptimizedModels.append[clf]
+            OptimizedModels.append(clf)
 
 
-    #MultiClassificaiton attempt
+#MultiClassificaiton attempt
+print("Testing MultiClass identification now")
+classindex = 0 #For tracking which model to currently predict on
+for index in tqdm(label_indices, desc="Processing classes", leave=True):
+    tqdm.write(f'Target class: {labels[index]}')
+    currentmodel = OptimizedModels[classindex]
+
+    classindex = classindex + 1
+    
+    #Makes the prediciton on the model
+    predictions = currentmodel.predict(MultiTrainData)
+
+    #Tracked the indices that were selected as apart of the model
+    inlier_indices = [i for i, pred in enumerate(predictions) if pred == 1]
+
+    SelfClassificaitons.append(inlier_indices)
+
+for index, sublist in enumerate(SelfClassificaitons):
+    for number in sublist:
+        # Add or update the number in the dictionary
+        if number not in SharedIndices:
+            SharedIndices[number] = []
+        SharedIndices[number].append(index)
+
+SharedIndices = {num: indices for num, indices in SharedIndices.items() if len(indices) > 1}
+
+print(SharedIndices)
+
+
+
+
+
+        
+
