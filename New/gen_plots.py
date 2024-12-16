@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import re
 
 # Load the CSV file
-file_path = 'Data-traffic-distribution-giga_nox264_results.csv'  # Replace with your actual file path
+file_path = 'Data-traffic-distribution-giga_nox264_results.csv'
 data = pd.read_csv(file_path, header=None)
 
 # Identify the start indices of each table
@@ -43,8 +43,6 @@ for i in range(len(target_class_indices)):
     ax.set_xlabel('Nu')
     ax.set_ylabel('Gamma')
     ax.set_zlabel('Accuracy (%)')
-
-    # Update title with target class, noise percentage, and upsampling
     ax.set_title(f"3D Plot for {target_class}\nNoise: {noise_percentage}%, Upsampling: {upsampling_value}")
 
     plt.savefig(f"Plots/plot_{target_class}_noise_{noise_percentage}_upsampling_{upsampling_value}.png")

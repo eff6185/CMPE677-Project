@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import os
 
 def main():
-    # File path (update as needed)
     file_path = 'Data-traffic-distribution-giga_nox264_results.csv'
 
     # Ensure the output directory exists
@@ -33,13 +32,6 @@ def main():
         table_data = table.iloc[1:].reset_index(drop=True)
         table_data.columns = table.values[0]  # Set the column headers
         table_data = table_data[1:].reset_index(drop=True)  # Drop the header row
-
-        # Ensure necessary columns are present
-        required_columns = ['Noise Percantages', 'ACC (%)']
-        table_data.columns = table_data.columns.str.strip()  # Strip whitespace from column headers
-        for col in required_columns:
-            if col not in table_data.columns:
-                raise ValueError(f"Missing required column: {col} in table for class {class_name}")
 
         # Convert columns to numeric
         table_data['Noise Percantages'] = pd.to_numeric(table_data['Noise Percantages'], errors='coerce')
@@ -79,7 +71,6 @@ def main():
         plt.savefig(f'2DPlots/{class_name}_max_accuracy_plot.png')
         plt.close()
 
-    print("Plots have been generated and saved.")
 
 if __name__ == "__main__":
     main()

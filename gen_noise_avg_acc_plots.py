@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import os
 
 def main():
-    # File path (update as needed)
     file_path = 'Data-traffic-distribution-giga_nox264_results.csv'
 
     # Ensure the output directory exists
@@ -34,13 +33,6 @@ def main():
         table_data.columns = table.values[0]  # Set the column headers
         table_data = table_data[1:].reset_index(drop=True)  # Drop the header row
 
-        # Ensure necessary columns are present
-        required_columns = ['Noise Percantages', 'ACC (%)']
-        table_data.columns = table_data.columns.str.strip()  # Strip whitespace from column headers
-        for col in required_columns:
-            if col not in table_data.columns:
-                raise ValueError(f"Missing required column: {col} in table for class {class_name}")
-
         # Convert columns to numeric
         table_data['Noise Percantages'] = pd.to_numeric(table_data['Noise Percantages'], errors='coerce')
         table_data['ACC (%)'] = pd.to_numeric(table_data['ACC (%)'], errors='coerce')
@@ -67,7 +59,6 @@ def main():
         plt.figure(figsize=(10, 6))
         plt.plot(grouped['Noise Percantages'], grouped['ACC (%)'], marker='o', label=f'Class: {class_name}')
 
-        # Add plot details
         plt.title(f'Average Accuracy vs Noise Percentage for Class: {class_name}')
         plt.xlabel('Noise Percentage')
         plt.ylabel('Average Accuracy (%)')
@@ -75,11 +66,8 @@ def main():
         plt.legend()
         plt.grid(True)
 
-        # Save the plot
         plt.savefig(f'2DPlots/{class_name}_avg_accuracy_plot.png')
         plt.close()
-
-    print("Plots have been generated and saved.")
 
 if __name__ == "__main__":
     main()
